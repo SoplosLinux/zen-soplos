@@ -3711,7 +3711,7 @@ diff --git a/kernel/locking/ww_mutex.h b/kernel/locking/ww_mutex.h
 diff --git a/kernel/sched/alt_core.c b/kernel/sched/alt_core.c
 --- a/kernel/sched/alt_core.c
 +++ b/kernel/sched/alt_core.c
-@@ -0,0 +1,8133 @@
+@@ -0,0 +1,8121 @@
 +/*
 + *  kernel/sched/alt_core.c
 + *
@@ -6695,16 +6695,6 @@ diff --git a/kernel/sched/alt_core.c b/kernel/sched/alt_core.c
 +			wake_flags |= WF_MIGRATED;
 +			psi_ttwu_dequeue(p);
 +			set_task_cpu(p, cpu);
-+		} else if (cpu != p->wake_cpu) {
-+			/*
-+			 * If we were proxy-migrated to cpu, then
-+			 * select_task_rq() picks cpu instead of wake_cpu
-+			 * to return to, we won't call set_task_cpu(),
-+			 * leaving a stale wake_cpu pointing to where we
-+			 * proxy-migrated from. So just fixup wake_cpu here
-+			 * if its not correct
-+			 */
-+			p->wake_cpu = cpu;
 +		}
 +
 +		ttwu_queue(p, cpu, wake_flags);
@@ -10003,8 +9993,6 @@ diff --git a/kernel/sched/alt_core.c b/kernel/sched/alt_core.c
 +	 * Do sync before park smpboot threads to take care the RCU boost case.
 +	 */
 +	synchronize_rcu();
-+
-+	sched_domains_free_llc_id(cpu);
 +
 +	sched_set_rq_offline(rq, cpu);
 +

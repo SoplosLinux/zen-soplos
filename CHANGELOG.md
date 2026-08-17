@@ -1,5 +1,31 @@
 # Changelog — zen-soplos
 
+## 1.1.1 — 2026-08-18
+
+### Fixed
+
+- `kernel/sched/alt_core.c` failed to compile against real Linux 7.2
+  (first real build test of the 1.1.0 rebase, caught mid-way through a
+  6-kernel unattended Stock build): two `CONFIG_SCHED_PROXY_EXEC`/
+  `CONFIG_SCHED_CACHE` mainline additions leaked into the 3-way merge
+  instead of being excluded like every other CFS-only addition in the
+  file.
+  - `try_to_wake_up()` gained an `else if (cpu != p->wake_cpu) { ...
+    p->wake_cpu = cpu; }` proxy-migration fixup. `wake_cpu` itself is
+    `#ifndef CONFIG_SCHED_ALT`-guarded out of `task_struct` in mainline
+    (BMQ/PDS doesn't track it), so the field didn't exist —
+    `error: 'struct task_struct' has no member named 'wake_cpu'`.
+    Removed the clause; the 7.1 patch's equivalent function never had it.
+  - `sched_cpu_deactivate()` gained a `sched_domains_free_llc_id(cpu);`
+    call. Its declaration in `sched.h` is itself inside the same
+    `#ifndef CONFIG_SCHED_ALT` region as the LLC-balancing block already
+    excluded elsewhere in this file, so it was never declared for a
+    `CONFIG_SCHED_ALT` build — `error: implicit declaration of function
+    'sched_domains_free_llc_id'`. Removed the call; confirmed absent from
+    the 7.1 patch's equivalent function too.
+  - Verified with a fresh `patch -p1` apply against pristine v7.2 sources:
+    exit 0, zero fuzz, zero rejects, for all files.
+
 ## 1.1.0 — 2026-08-17
 
 ### Added
