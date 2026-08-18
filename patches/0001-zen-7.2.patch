@@ -11987,7 +11987,7 @@ diff --git a/kernel/sched/alt_debug.c b/kernel/sched/alt_debug.c
 diff --git a/kernel/sched/alt_sched.h b/kernel/sched/alt_sched.h
 --- a/kernel/sched/alt_sched.h
 +++ b/kernel/sched/alt_sched.h
-@@ -0,0 +1,1345 @@
+@@ -0,0 +1,1346 @@
 +#ifndef _KERNEL_SCHED_ALT_SCHED_H
 +#define _KERNEL_SCHED_ALT_SCHED_H
 +
@@ -11999,6 +11999,7 @@ diff --git a/kernel/sched/alt_sched.h b/kernel/sched/alt_sched.h
 +#include <linux/psi.h>
 +#include <linux/stop_machine.h>
 +#include <linux/sched/rseq_api.h>
++#include <linux/sched/stat.h>
 +#include <linux/syscalls.h>
 +#include <linux/tick.h>
 +

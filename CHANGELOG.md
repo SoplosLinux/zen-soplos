@@ -1,5 +1,23 @@
 # Changelog — zen-soplos
 
+## 1.1.2 — 2026-08-18
+
+### Fixed
+
+- `kernel/sched/alt_sched.h` was missing `#include <linux/sched/stat.h>` —
+  not a merge mistake, this gap already existed in BMQ/PDS's own header on
+  7.1 too, it just never mattered there. Mainline 7.2 added a new function
+  to `kernel/sched/cputime.c` (`kcpustat_idle_stop`) that calls
+  `nr_iowait_cpu()`, and that file is compiled as part of
+  `build_policy.c`'s translation unit, which reaches scheduler internals
+  through `sched.h` → (`CONFIG_SCHED_ALT`) → `alt_sched.h` instead of the
+  normal chain that pulls in `<linux/sched/stat.h>` directly. First
+  surfaced compiling `soplos-zen-v1` overnight in a 26-kernel unattended
+  Stock run — `error: implicit declaration of function 'nr_iowait_cpu'`.
+  Added the include next to the other `linux/sched/*` headers already
+  there. Verified with a fresh `patch -p1` apply against pristine v7.2
+  sources: exit 0, zero fuzz, zero rejects.
+
 ## 1.1.1 — 2026-08-18
 
 ### Fixed
