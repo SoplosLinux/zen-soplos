@@ -14867,11 +14867,20 @@ diff --git a/kernel/sched/debug.c b/kernel/sched/debug.c
  	debugfs_ext_server_init();
  #endif
 +#endif /* !CONFIG_SCHED_ALT */
- 
+
  	return 0;
  }
-@@ -1440,6 +1453,11 @@
- 
+@@ -1319,7 +1319,8 @@
+ 	show_numa_stats(p, m);
+ #endif /* CONFIG_NUMA_BALANCING */
+ }
+
++#ifndef CONFIG_SCHED_ALT
+ void proc_sched_show_task(struct task_struct *p, struct pid_namespace *ns,
+ 						  struct seq_file *m)
+ {
+@@ -1440,6 +1454,11 @@
+
  	sched_show_numa(p, m);
  }
 +#else

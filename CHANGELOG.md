@@ -1,5 +1,28 @@
 # Changelog — zen-soplos
 
+## 1.1.3 — 2026-08-18
+
+### Fixed
+
+- `kernel/sched/debug.c`: `proc_sched_show_task()` (the CFS/mainline body)
+  was missing its opening `#ifndef CONFIG_SCHED_ALT` guard — the matching
+  `#else` (stub for BMQ/PDS, which provides the real implementation
+  separately in `alt_debug.c`) and `#endif` were already there, but
+  without the opening the CFS body compiled unconditionally under
+  `CONFIG_SCHED_ALT` too. Caused three classes of error in the same
+  build: `'struct task_struct' has no member named 'se'/'dl'` (CFS/DL
+  scheduling-class fields that don't exist under `CONFIG_SCHED_ALT`),
+  `'#else' without '#if'`, and `redefinition of 'proc_sched_show_task'`
+  (both this stub and `alt_debug.c`'s real one ended up compiled at
+  once). First surfaced compiling `soplos-zen-v1` a second time — this is
+  a fourth, distinct bug from the same 1.1.0 merge, in a different file
+  than the previous three. Added the missing `#ifndef CONFIG_SCHED_ALT`
+  immediately before the function definition. Verified two ways: a
+  `#if`/`#endif` nesting-balance check across the whole file (0 at EOF),
+  and a fresh `patch -p1` apply against pristine v7.2 sources producing a
+  byte-identical `debug.c` to the one hand-fixed directly in the build
+  tree to unblock the in-progress compile.
+
 ## 1.1.2 — 2026-08-18
 
 ### Fixed
