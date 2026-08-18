@@ -3249,7 +3249,15 @@ diff --git a/init/Kconfig b/init/Kconfig
  	help
  	  This option adds support for automatic NUMA aware memory/task placement.
  	  The mechanism is quite primitive and is based on migrating memory when
-@@ -1312,7 +1392,7 @@
+@@ -1026,6 +1106,7 @@
+ 	bool "Cache aware load balance"
+ 	default y
+ 	depends on SMP
++	depends on !SCHED_ALT
+ 	help
+ 	  When enabled, the scheduler will attempt to aggregate tasks from
+ 	  the same process onto a single Last Level Cache (LLC) domain when
+@@ -1312,7 +1393,7 @@
  
  config CPUSETS_V1
  	bool "Legacy cgroup v1 cpusets controller"
@@ -3258,7 +3266,7 @@ diff --git a/init/Kconfig b/init/Kconfig
  	default n
  	help
  	  Legacy cgroup v1 cpusets controller which has been deprecated by
-@@ -1448,6 +1528,22 @@
+@@ -1448,6 +1529,22 @@
  
  	  If unsure, say N.
  
@@ -3281,7 +3289,7 @@ diff --git a/init/Kconfig b/init/Kconfig
  config PID_NS
  	bool "PID Namespaces"
  	default y
-@@ -1482,6 +1578,7 @@
+@@ -1482,6 +1579,7 @@
  
  config SCHED_AUTOGROUP
  	bool "Automatic process group scheduling"
@@ -3289,7 +3297,7 @@ diff --git a/init/Kconfig b/init/Kconfig
  	select CGROUPS
  	select CGROUP_SCHED
  	select FAIR_GROUP_SCHED
-@@ -1616,6 +1713,12 @@
+@@ -1616,6 +1714,12 @@
  	  with the "-O2" compiler flag for best performance and most
  	  helpful compile-time warnings.
  

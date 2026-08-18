@@ -1,5 +1,51 @@
 # Changelog — zen-soplos
 
+## 1.1.5 — 2026-08-18
+
+### Fixed
+
+- **Linker failure, not a compile error** (`vmlinux.o: en la función
+  'mm_init': referencia a 'mm_init_sched' sin definir`, and the same for
+  `sched_update_llc_bytes` from `drivers/base/cacheinfo.c`): unlike
+  `CONFIG_SCHED_PROXY_EXEC`, mainline's new `CONFIG_SCHED_CACHE` Kconfig
+  entry (`init/Kconfig`) never got a `depends on !SCHED_ALT` — the patch
+  already excludes BMQ/PDS from every `CONFIG_SCHED_CACHE`-guarded code
+  path, but the option itself (`default y`) stayed enabled, so generic
+  kernel code outside the scheduler (`kernel/fork.c`,
+  `drivers/base/cacheinfo.c`, neither of them scheduler files) still
+  called into the LLC-balancing functions that only exist when
+  `fair.c`/`topology.c` are compiled — which they aren't under
+  `CONFIG_SCHED_ALT`. Added the missing `depends on !SCHED_ALT`, matching
+  the existing pattern already used for `SCHED_PROXY_EXEC`.
+  Compile-and-link verified: a full `vmlinux` was built successfully
+  end-to-end with `soplos-zen-v1`'s config, not just individual objects.
+
+## 1.1.4 — 2026-08-18
+
+### Fixed
+
+- `kernel/sched/debug.c`, two more gaps from the same 1.1.0 merge, both
+  found via direct targeted compiles (`make kernel/sched/build_utility.o`,
+  `kernel/sched/`) instead of waiting on the full 26-kernel queue:
+  - `static struct dentry *debugfs_sched;` was declared inside an already-
+    excluded `CONFIG_SCHED_ALT` region, but `sched_init_debug()` — which
+    still runs under `CONFIG_SCHED_ALT` to register a few generic
+    debugfs entries — uses it unconditionally a few lines later:
+    `'debugfs_sched' undeclared`. Moved the declaration to the top of the
+    file, unconditional.
+  - `sched_fair_server_period_write/show/open` and `fair_server_period_fops`
+    reference `DL_PERIOD`/`rq->fair_server`/`sched_server_write_common`/
+    `sched_server_show_common`, all CFS/deadline-server only, but sat
+    outside any `CONFIG_SCHED_ALT` guard: `invalid use of undefined type
+    'struct cfs_rq'` and several implicit-declaration errors. Wrapped in
+    `#ifndef CONFIG_SCHED_ALT`, matching its sibling
+    `sched_fair_server_runtime_*` functions which were already guarded.
+  - Also confirmed (compile-verified, not just balance-checked) that
+    `kernel/sched/build_policy.o`, `alt_core.o`, `alt_debug.o` and the
+    whole `kernel/sched/` built-in object build clean with only two
+    pre-existing, harmless warnings (`sched_show_numa` unused,
+    `task_llc` missing prototype, frame-size notice on `select_task_rq`).
+
 ## 1.1.3 — 2026-08-18
 
 ### Fixed
