@@ -14788,15 +14788,20 @@ diff --git a/kernel/sched/cputime.c b/kernel/sched/cputime.c
 diff --git a/kernel/sched/debug.c b/kernel/sched/debug.c
 --- a/kernel/sched/debug.c
 +++ b/kernel/sched/debug.c
-@@ -11,6 +11,7 @@
+@@ -11,6 +11,12 @@
  #include <linux/log2.h>
  #include "sched.h"
  
++/* sched_init_debug() creates this directory unconditionally — CONFIG_SCHED_ALT
++ * builds still register a handful of generic debugfs entries under it, even
++ * though most of what normally lives here is CFS-only and excluded below. */
++static struct dentry *debugfs_sched;
++
 +#ifndef CONFIG_SCHED_ALT
  /*
   * This allows printing both to /sys/kernel/debug/sched/debug and
   * to the console
-@@ -252,6 +253,8 @@
+@@ -252,6 +258,8 @@
  };
  #endif
  
@@ -14805,7 +14810,7 @@ diff --git a/kernel/sched/debug.c b/kernel/sched/debug.c
  #ifdef CONFIG_PREEMPT_DYNAMIC
  
  static ssize_t sched_dynamic_write(struct file *filp, const char __user *ubuf,
-@@ -318,6 +321,7 @@
+@@ -318,6 +326,7 @@
  
  #endif /* CONFIG_PREEMPT_DYNAMIC */
  
@@ -14813,7 +14818,16 @@ diff --git a/kernel/sched/debug.c b/kernel/sched/debug.c
  __read_mostly bool sched_debug_verbose;
  
  static struct dentry           *sd_dentry;
-@@ -557,6 +561,7 @@
+@@ -491,8 +500,6 @@
+ 	.release	= single_release,
+ };
+ 
+-static struct dentry *debugfs_sched;
+-
+ #ifdef CONFIG_SCHED_CLASS_EXT
+ static ssize_t
+ sched_ext_server_runtime_write(struct file *filp, const char __user *ubuf,
+@@ -557,6 +564,7 @@
  	.llseek		= seq_lseek,
  	.release	= single_release,
  };
@@ -14821,15 +14835,25 @@ diff --git a/kernel/sched/debug.c b/kernel/sched/debug.c
  
  static void debugfs_ext_server_init(void)
  {
-@@ -612,6 +617,7 @@
+@@ -580,6 +588,7 @@
+ }
+ #endif /* CONFIG_SCHED_CLASS_EXT */
+ 
++#ifndef CONFIG_SCHED_ALT
+ static ssize_t
+ sched_fair_server_period_write(struct file *filp, const char __user *ubuf,
+ 			       size_t cnt, loff_t *ppos)
+@@ -611,7 +620,9 @@
+ 	.llseek		= seq_lseek,
  	.release	= single_release,
  };
++#endif /* !CONFIG_SCHED_ALT */
  
 +#ifndef CONFIG_SCHED_ALT
  static void debugfs_fair_server_init(void)
  {
  	struct dentry *d_fair;
-@@ -632,6 +638,7 @@
+@@ -632,6 +643,7 @@
  		debugfs_create_file("period", 0644, d_cpu, (void *) cpu, &fair_server_period_fops);
  	}
  }
@@ -14837,7 +14861,7 @@ diff --git a/kernel/sched/debug.c b/kernel/sched/debug.c
  
  static __init int sched_init_debug(void)
  {
-@@ -639,14 +646,17 @@
+@@ -639,14 +651,17 @@
  
  	debugfs_sched = debugfs_create_dir("sched", NULL);
  
@@ -14855,7 +14879,7 @@ diff --git a/kernel/sched/debug.c b/kernel/sched/debug.c
  	debugfs_create_u32("latency_warn_ms", 0644, debugfs_sched, &sysctl_resched_latency_warn_ms);
  	debugfs_create_u32("latency_warn_once", 0644, debugfs_sched, &sysctl_resched_latency_warn_once);
  
-@@ -685,11 +695,14 @@
+@@ -685,15 +700,19 @@
  #endif
  
  	debugfs_create_file("debug", 0444, debugfs_sched, NULL, &sched_debug_fops);
@@ -14867,20 +14891,32 @@ diff --git a/kernel/sched/debug.c b/kernel/sched/debug.c
  	debugfs_ext_server_init();
  #endif
 +#endif /* !CONFIG_SCHED_ALT */
-
+ 
  	return 0;
  }
-@@ -1319,7 +1319,8 @@
- 	show_numa_stats(p, m);
+ late_initcall(sched_init_debug);
++#ifndef CONFIG_SCHED_ALT
+ 
+ static cpumask_var_t		sd_sysctl_cpus;
+ 
+@@ -1284,6 +1303,7 @@
+ 	.stop		= sched_debug_stop,
+ 	.show		= sched_debug_show,
+ };
++#endif /* !CONFIG_SCHED_ALT */
+ 
+ #define __PS(S, F) SEQ_printf(m, "%-45s:%21Ld\n", S, (long long)(F))
+ #define __P(F) __PS(#F, F)
+@@ -1320,6 +1340,7 @@
  #endif /* CONFIG_NUMA_BALANCING */
  }
-
+ 
 +#ifndef CONFIG_SCHED_ALT
  void proc_sched_show_task(struct task_struct *p, struct pid_namespace *ns,
  						  struct seq_file *m)
  {
-@@ -1440,6 +1454,11 @@
-
+@@ -1440,6 +1461,11 @@
+ 
  	sched_show_numa(p, m);
  }
 +#else
