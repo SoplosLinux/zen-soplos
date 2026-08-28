@@ -5,9 +5,12 @@ patchset (BMQ/PDS scheduler + assorted driver/filesystem/network tweaks),
 kept building against current Soplos kernel point releases when upstream
 hasn't published a matching release yet.
 
-> Not yet wired into **soplos-kernel-installer** — `core/downloader.py` still
-> fetches Zen from zen-kernel's GitHub releases directly. This repo exists so
-> a working patch is ready the moment it's needed. See "Status" below.
+> Wired into **soplos-kernel-installer** as a fallback: `core/downloader.py`
+> tries zen-kernel's own GitHub releases first, and only falls back to this
+> repo (`_download_zen_soplos()`) when upstream hasn't published a patch that
+> applies cleanly to the requested kernel version yet — verified with a
+> dry-run apply before either source is accepted, not just a successful
+> download.
 
 ---
 
@@ -115,29 +118,34 @@ the patch file's own commit message.
 
 ## Status
 
-- **7.1.5:** verified with `patch -p1 --dry-run` against the real kernel
-  source tree (kernel.org, tag `v7.1.5`, stable branch) — all 113 files
-  (101 modified + 12 new) apply clean, no fuzz, no rejects, exit code 0.
-- **7.2:** same verification, tag `v7.2` — all 107 files (101 modified + 6
-  new) apply clean, no fuzz, no rejects, exit code 0.
-- **Not build-tested on either.** This is a much larger surface than
-  `bore-soplos` or `x3d-soplos` (a full alternate scheduler plus unrelated
-  driver/network code) — a clean `patch` apply says nothing about whether
-  it compiles.
-- **Not boot-tested on either.**
+- **7.1.5:** verified with `patch -p1 --dry-run` (all 113 files clean, no
+  fuzz, no rejects), **compiled and boot-tested on real hardware** —
+  `CONFIG_SCHED_ALT`/`CONFIG_SCHED_PDS` confirmed active at runtime, not
+  just compiled in.
+- **7.2:** verified with `patch -p1 --dry-run` (all 107 files clean, no
+  fuzz, no rejects). **Compiled and linked successfully end-to-end**
+  (`vmlinux` built with no errors, `soplos-zen-v1`'s real `.config`) as of
+  1.1.5 — four distinct build/link bugs were found and fixed along the
+  way (see CHANGELOG 1.1.1–1.1.5), each caught by actually compiling, not
+  by re-reading the diff. **Not yet boot-tested**, and the `.deb`
+  packaging stage (`dpkg-buildpackage`/`modules_install`) hasn't been
+  exercised to completion either — only the kernel image itself has been
+  built and linked so far.
 - The GPU driver hunks (`amdgpu`, `i915`, `ttm`) and TCP/BBR3 hunks were not
   individually reviewed beyond the automated apply check — they touch
   subsystems unrelated to the scheduler and were not the reason either
   rebase was needed.
-- The 7.2 rebase in particular went through a substantially more invasive
-  reconciliation (3-way merge, 21 manually-reviewed conflicts) than 7.1.5
-  did (1 line addition) — treat it with proportionally more caution until
-  it's actually been compiled and booted.
+- The 7.2 rebase went through a substantially more invasive reconciliation
+  (3-way merge, 21 manually-reviewed conflicts) than 7.1.5 did (1 line
+  addition), which is exactly why it needed four extra fixes after the
+  initial merge that 7.1.5 didn't — treat it with proportionally more
+  caution until it's been through a full `.deb` build and a real boot.
 
-Do not package a `soplos-zen` kernel from either patch until it has been
-compiled and booted at least once. This patchset also conflicts with BORE
-and RT by design (BMQ/PDS replaces CFS entirely) — same mutual-exclusion
-rule `soplos-kernel-installer`'s patch selector already enforces.
+Do not package a `soplos-zen` 7.2 kernel for release until it has completed
+a full `.deb` build and been booted at least once on real hardware. This
+patchset also conflicts with BORE and RT by design (BMQ/PDS replaces CFS
+entirely) — same mutual-exclusion rule `soplos-kernel-installer`'s patch
+selector already enforces.
 
 ---
 
