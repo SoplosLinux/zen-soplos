@@ -123,14 +123,10 @@ the patch file's own commit message.
   `CONFIG_SCHED_ALT`/`CONFIG_SCHED_PDS` confirmed active at runtime, not
   just compiled in.
 - **7.2:** verified with `patch -p1 --dry-run` (all 107 files clean, no
-  fuzz, no rejects). **Compiled and linked successfully end-to-end**
-  (`vmlinux` built with no errors, `soplos-zen-v1`'s real `.config`) as of
-  1.1.5 — four distinct build/link bugs were found and fixed along the
-  way (see CHANGELOG 1.1.1–1.1.5), each caught by actually compiling, not
-  by re-reading the diff. **Not yet boot-tested**, and the `.deb`
-  packaging stage (`dpkg-buildpackage`/`modules_install`) hasn't been
-  exercised to completion either — only the kernel image itself has been
-  built and linked so far.
+  fuzz, no rejects), **compiled, packaged, and boot-tested** — published as
+  `linux-soplos-zen-v1` through `v4` (7.2.5) in the stable repository,
+  following the same validation process as every other kernel variant
+  before release.
 - The GPU driver hunks (`amdgpu`, `i915`, `ttm`) and TCP/BBR3 hunks were not
   individually reviewed beyond the automated apply check — they touch
   subsystems unrelated to the scheduler and were not the reason either
@@ -138,13 +134,10 @@ the patch file's own commit message.
 - The 7.2 rebase went through a substantially more invasive reconciliation
   (3-way merge, 21 manually-reviewed conflicts) than 7.1.5 did (1 line
   addition), which is exactly why it needed four extra fixes after the
-  initial merge that 7.1.5 didn't — treat it with proportionally more
-  caution until it's been through a full `.deb` build and a real boot.
+  initial merge that 7.1.5 didn't (see CHANGELOG 1.1.1–1.1.5).
 
-Do not package a `soplos-zen` 7.2 kernel for release until it has completed
-a full `.deb` build and been booted at least once on real hardware. This
-patchset also conflicts with BORE and RT by design (BMQ/PDS replaces CFS
-entirely) — same mutual-exclusion rule `soplos-kernel-installer`'s patch
+This patchset also conflicts with BORE and RT by design (BMQ/PDS replaces
+CFS entirely) — same mutual-exclusion rule `soplos-kernel-installer`'s patch
 selector already enforces.
 
 ---

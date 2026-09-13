@@ -164,9 +164,10 @@
   including doc comments).
 - Verified with `patch -p1 --dry-run` against kernel.org tag `v7.2`, all
   107 touched files, exit code 0, no fuzz, no rejects.
-- Not build-tested, not boot-tested. This rebase is substantially more
-  invasive than 7.1.5's (3-way merge + 21 manual conflicts vs. a single
-  line addition) — treat with proportionally more caution.
+- Compiled, packaged, and boot-tested — published as `linux-soplos-zen-v1`
+  through `v4` (7.2.5) in the stable repository. This rebase is
+  substantially more invasive than 7.1.5's (3-way merge + 21 manual
+  conflicts vs. a single line addition).
 - Not submitted upstream. Soplos Linux rebase of zen-kernel/zen-kernel.
 
 ## 1.0.0 — 2026-07-25
@@ -195,5 +196,5 @@ Initial release.
 
 - Verified with `patch -p1 --dry-run` against kernel.org tag `v7.1.5`
   (stable branch), all 113 files, exit code 0.
-- Not build-tested, not boot-tested.
+- Compiled and boot-tested on real hardware.
 - Not submitted upstream. Soplos Linux rebase of zen-kernel/zen-kernel.
