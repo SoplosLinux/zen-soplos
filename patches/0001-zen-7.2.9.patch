@@ -151,7 +151,7 @@ diff --git a/arch/x86/include/asm/sync_core.h b/arch/x86/include/asm/sync_core.h
 diff --git a/arch/x86/kernel/cpu/bus_lock.c b/arch/x86/kernel/cpu/bus_lock.c
 --- a/arch/x86/kernel/cpu/bus_lock.c
 +++ b/arch/x86/kernel/cpu/bus_lock.c
-@@ -47,7 +47,11 @@
+@@ -47,8 +47,12 @@
  
  static struct ratelimit_state bld_ratelimit;
  
@@ -3609,7 +3609,7 @@ diff --git a/kernel/Kconfig.preempt b/kernel/Kconfig.preempt
  	help
  	  This option permits Core Scheduling, a means of coordinated task
  	  selection across SMT siblings. When enabled -- see
-@@ -169,7 +169,7 @@
+@@ -169,5 +169,5 @@
 
  config SCHED_CLASS_EXT
 	bool "Extensible Scheduling Class"
@@ -3710,7 +3710,7 @@ diff --git a/kernel/locking/ww_mutex.h b/kernel/locking/ww_mutex.h
 diff --git a/kernel/sched/alt_core.c b/kernel/sched/alt_core.c
 --- a/kernel/sched/alt_core.c
 +++ b/kernel/sched/alt_core.c
-@@ -0,0 +1,8121 @@
+@@ -0,0 +1,8133 @@
 +/*
 + *  kernel/sched/alt_core.c
 + *
