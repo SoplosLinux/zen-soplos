@@ -11,6 +11,7 @@
 - **Linux 7.2.9 compatibility**:
   - Adjusted `SUBLEVEL = 9` in top-level `Makefile`.
   - Re-aligned `kernel/Kconfig.preempt` context lines (`SCHED_CLASS_EXT` with `select GENERIC_ALLOCATOR`).
+  - Added missing `rt_mutex_futex_pre_schedule()` and `rt_mutex_futex_post_schedule()` symbol exports in `kernel/sched/alt_core.c` required by Linux 7.2.9's `rtmutex_api.c`.
   - Stripped upstream's conflicting `arch/x86/Makefile` modifications so Soplos' `soplos-cpu-kernel-patch` (`0001-x86-64-isa-level-7.x.patch`) applies cleanly for V2, V3 and V4 microarchitecture builds.
   - Verified 100% clean dry-run apply (0 errors, 0 rejects) against official Linux 7.2.9 kernel tree.
 

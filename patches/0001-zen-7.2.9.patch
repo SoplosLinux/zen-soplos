@@ -8975,6 +8975,18 @@ diff --git a/kernel/sched/alt_core.c b/kernel/sched/alt_core.c
 +	lockdep_assert(fetch_and_set(current->sched_rt_mutex, 0));
 +}
 +
++void rt_mutex_futex_pre_schedule(void)
++{
++	lockdep_assert(!(current->flags & (PF_WQ_WORKER | PF_IO_WORKER)));
++	lockdep_assert(!current->plug);
++	lockdep_assert(!fetch_and_set(current->sched_rt_mutex, 1));
++}
++
++void rt_mutex_futex_post_schedule(void)
++{
++	lockdep_assert(fetch_and_set(current->sched_rt_mutex, 0));
++}
++
 +/*
 + * rt_mutex_setprio - set the current priority of a task
 + * @p: task to boost
