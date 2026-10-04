@@ -33,6 +33,7 @@ zen-kernel hasn't published one yet.
 |------|-----------------|------|
 | `patches/0001-zen-7.1.patch` | Linux 7.1.5 | zen-kernel `v7.1.4-zen1` release |
 | `patches/0001-zen-7.2.patch` | Linux 7.2 | zen-kernel `v7.1.8-zen1` release |
+| `patches/0001-zen-7.2.9.patch` | Linux 7.2.9 | zen-kernel `v7.1.8-zen1` rebase for Linux 7.2.9 |
 
 No `v7.1.5-zen*` or `v7.2-zen*` release existed upstream at the time these
 rebases were made — zen-kernel typically publishes within days of each
@@ -116,6 +117,19 @@ the patch file's own commit message.
 
 ---
 
+## Why this rebase exists (7.2.9)
+
+Linux 7.2.9 introduced minor context drift in `kernel/Kconfig.preempt` (`SCHED_CLASS_EXT` gained `select GENERIC_ALLOCATOR`) and updated `SUBLEVEL = 9` in the top-level `Makefile`.
+
+Additionally, upstream zen-kernel's official releases include `arch/x86/Makefile` changes for `CONFIG_X86_64_VERSION`, which conflict with Soplos Linux's ISA level selection patch (`0001-x86-64-isa-level-7.x.patch`).
+
+**Fix:**
+1. Re-aligned `SUBLEVEL = 9` in the top-level `Makefile` hunk.
+2. Updated context matching for `SCHED_CLASS_EXT` in `kernel/Kconfig.preempt`.
+3. Stripped the `arch/x86/Makefile` modification so that Soplos' ISA-level patch applies cleanly for V1, V2, V3, and V4 builds without collision.
+
+---
+
 ## Status
 
 - **7.1.5:** verified with `patch -p1 --dry-run` (all 113 files clean, no
@@ -127,6 +141,9 @@ the patch file's own commit message.
   `linux-soplos-zen-v1` through `v4` (7.2.5) in the stable repository,
   following the same validation process as every other kernel variant
   before release.
+- **7.2.9:** verified with `patch -p1 --dry-run` (all 113 files 100% clean, 0
+  rejects) against official Linux 7.2.9 sources. Stripped `arch/x86/Makefile`
+  hunk to prevent ISA level (V2/V3/V4) build conflicts.
 - The GPU driver hunks (`amdgpu`, `i915`, `ttm`) and TCP/BBR3 hunks were not
   individually reviewed beyond the automated apply check — they touch
   subsystems unrelated to the scheduler and were not the reason either
@@ -151,6 +168,10 @@ patch -p1 < /path/to/patches/0001-zen-7.1.patch
 # or, for 7.2:
 cd /path/to/linux-7.2
 patch -p1 < /path/to/patches/0001-zen-7.2.patch
+
+# or, for 7.2.9:
+cd /path/to/linux-7.2.9
+patch -p1 < /path/to/patches/0001-zen-7.2.9.patch
 ```
 
 ---

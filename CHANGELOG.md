@@ -1,5 +1,19 @@
 # Changelog — zen-soplos
 
+## 1.1.6 — 2026-10-04
+
+### Added
+
+- New patch `patches/0001-zen-7.2.9.patch` for Linux 7.2.9 kernel line.
+
+### Fixed
+
+- **Linux 7.2.9 compatibility**:
+  - Adjusted `SUBLEVEL = 9` in top-level `Makefile`.
+  - Re-aligned `kernel/Kconfig.preempt` context lines (`SCHED_CLASS_EXT` with `select GENERIC_ALLOCATOR`).
+  - Stripped upstream's conflicting `arch/x86/Makefile` modifications so Soplos' `soplos-cpu-kernel-patch` (`0001-x86-64-isa-level-7.x.patch`) applies cleanly for V2, V3 and V4 microarchitecture builds.
+  - Verified 100% clean dry-run apply (0 errors, 0 rejects) against official Linux 7.2.9 kernel tree.
+
 ## 1.1.5 — 2026-08-18
 
 ### Fixed
