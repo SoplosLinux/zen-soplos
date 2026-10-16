@@ -3620,14 +3620,9 @@ diff --git a/kernel/Kconfig.preempt b/kernel/Kconfig.preempt
  	help
  	  This option permits Core Scheduling, a means of coordinated task
  	  selection across SMT siblings. When enabled -- see
-@@ -168,7 +168,7 @@
- 
- config SCHED_CLASS_EXT
- 	bool "Extensible Scheduling Class"
+@@ -171 +171 @@
 -	depends on BPF_SYSCALL && BPF_JIT && DEBUG_INFO_BTF
 +	depends on BPF_SYSCALL && BPF_JIT && DEBUG_INFO_BTF && !SCHED_ALT
- 	select STACKTRACE if STACKTRACE_SUPPORT
- 	help
  	  This option enables a new scheduler class sched_ext (SCX), which
 diff --git a/kernel/locking/rtmutex.c b/kernel/locking/rtmutex.c
 --- a/kernel/locking/rtmutex.c
@@ -16170,17 +16165,11 @@ diff --git a/kernel/workqueue.c b/kernel/workqueue.c
 diff --git a/Makefile b/Makefile
 --- a/Makefile
 +++ b/Makefile
-@@ -2,8 +2,8 @@
- VERSION = 7
- PATCHLEVEL = 2
- SUBLEVEL = 0
+@@ -5,2 +5,2 @@
 -EXTRAVERSION =
 -NAME = Baby Opossum Posse
 +EXTRAVERSION = -zen1
 +NAME = Channeling Inner Peace for Peak Performance
- 
- # *DOCUMENTATION*
- # To see a list of typical targets execute "make help"
 @@ -932,6 +932,9 @@
  ifdef CONFIG_CC_OPTIMIZE_FOR_PERFORMANCE
  KBUILD_CFLAGS += -O2
