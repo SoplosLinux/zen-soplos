@@ -1,5 +1,16 @@
 # Changelog — zen-soplos
 
+## 1.1.7 — 2026-10-16
+
+### Fixed
+
+- **`patches/0001-zen-7.2.patch` now applies cleanly across the whole 7.2.x line**, not just the initial 7.2 release. The generic patch is tried before any version-specific one in `soplos-kernel-installer`'s download order, so it needs to survive point releases on its own instead of requiring a new `0001-zen-7.2.X.patch` every time. Ported the same three fixes already proven for `0001-zen-7.2.9.patch` (1.1.6) into the generic patch, reworked so they no longer depend on the exact point release:
+  - `Makefile` hunk reduced to zero-context (`@@ -5,2 +5,2 @@`, only the `EXTRAVERSION`/`NAME` lines) instead of including `SUBLEVEL` as context — `VERSION`/`PATCHLEVEL`/`EXTRAVERSION`/`NAME` sit at fixed line numbers across the whole 7.2.x line, only `SUBLEVEL`'s value itself changes per point release.
+  - `kernel/Kconfig.preempt` hunk reduced to zero-context on the single `depends on` line for `CONFIG_SCHED_CLASS_EXT`, instead of including the following `select STACKTRACE if STACKTRACE_SUPPORT` line as trailing context — mainline inserted a new `select GENERIC_ALLOCATOR` line between them at some point in the 7.2.x line, which broke the old 3-line-context hunk.
+  - Added the missing `rt_mutex_futex_pre_schedule()` and `rt_mutex_futex_post_schedule()` definitions to `kernel/sched/alt_core.c` (previously only in the 7.2.9-specific patch) — without them, `kernel/locking/rtmutex_api.c` fails to link (`undefined reference`) on any 7.2.x release where mainline's `core.c` already has them, since `CONFIG_SCHED_ALT` excludes `core.c` from the build entirely.
+- Verified with a real (non-dry-run) `patch -p1` apply against both pristine Linux 7.2.9 and 7.2.11 sources: 0 errors, 0 rejects, both builds reach the linker with all four `rt_mutex_*` symbols present in `alt_core.c`.
+- Root cause of the Linux 7.2.11 build failure this fix addresses: `soplos-kernel-installer` correctly tried this patch first, but it failed its own dry-run (stale `SUBLEVEL` context) and fell back to zen-kernel's official upstream release, whose own `CONFIG_X86_64_VERSION` march mechanism in `arch/x86/Makefile` then conflicted with Soplos' `soplos-cpu-kernel-patch` ISA-level patch at V2 and above — the same class of failure already fixed for 7.2.9 in 1.1.6, now fixed at the source instead of per point release.
+
 ## 1.1.6 — 2026-10-04
 
 ### Added

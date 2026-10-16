@@ -32,12 +32,21 @@ zen-kernel hasn't published one yet.
 | File | Kernel versions | Base |
 |------|-----------------|------|
 | `patches/0001-zen-7.1.patch` | Linux 7.1.5 | zen-kernel `v7.1.4-zen1` release |
-| `patches/0001-zen-7.2.patch` | Linux 7.2 | zen-kernel `v7.1.8-zen1` release |
+| `patches/0001-zen-7.2.patch` | Linux 7.2.x (whole line, see 1.1.7) | zen-kernel `v7.1.8-zen1` release |
 | `patches/0001-zen-7.2.9.patch` | Linux 7.2.9 | zen-kernel `v7.1.8-zen1` rebase for Linux 7.2.9 |
 
 No `v7.1.5-zen*` or `v7.2-zen*` release existed upstream at the time these
 rebases were made — zen-kernel typically publishes within days of each
 stable release; check upstream before assuming a rebase is still needed.
+
+`soplos-kernel-installer` tries `0001-zen-{version}.patch` first (an exact
+point-release file, if one exists — e.g. `0001-zen-7.2.9.patch`), then falls
+back to `0001-zen-{major_minor}.patch` (the generic line-wide file, e.g.
+`0001-zen-7.2.patch`), and only then to zen-kernel's own upstream releases.
+Since 1.1.7 the generic file is hardened to survive point-release drift on
+its own (see below) — a dedicated per-version file is no longer required
+unless a point release introduces a conflict the generic file's zero-context
+hunks can't absorb.
 
 ---
 
@@ -127,6 +136,40 @@ Additionally, upstream zen-kernel's official releases include `arch/x86/Makefile
 1. Re-aligned `SUBLEVEL = 9` in the top-level `Makefile` hunk.
 2. Updated context matching for `SCHED_CLASS_EXT` in `kernel/Kconfig.preempt`.
 3. Stripped the `arch/x86/Makefile` modification so that Soplos' ISA-level patch applies cleanly for V1, V2, V3, and V4 builds without collision.
+
+---
+
+## Why `0001-zen-7.2.patch` was hardened for the whole 7.2.x line (1.1.7)
+
+`soplos-kernel-installer` tries the generic `0001-zen-7.2.patch` before
+falling back to zen-kernel's own upstream releases, so it needs to keep
+working across point releases on its own — not just at the exact 7.2.0 base
+it was originally generated against. Linux 7.2.11 exposed three places where
+the generic patch was still pinned to that exact base:
+
+1. **`Makefile`** — the hunk included `SUBLEVEL = 0` as context, so it broke
+   on every later point release. Fixed by shrinking the hunk to zero context
+   around just the `EXTRAVERSION`/`NAME` lines it actually changes — their
+   line numbers don't move across the 7.2.x line, only `SUBLEVEL`'s value
+   does, and that line was never part of what this hunk needed to touch.
+2. **`kernel/Kconfig.preempt`** — same problem, different cause: mainline
+   inserted a new `select GENERIC_ALLOCATOR` line between the hunk's changed
+   line and its trailing context at some point in the 7.2.x line. Fixed the
+   same way, shrinking to zero context around the single `depends on` line
+   that actually changes.
+3. **`kernel/sched/alt_core.c`** — missing `rt_mutex_futex_pre_schedule()`
+   and `rt_mutex_futex_post_schedule()`, which mainline's `core.c` already
+   has but this patch's frozen copy never picked up. Without them the build
+   gets past patching and compiling, and fails at the final link step
+   instead (`undefined reference` in `kernel/locking/rtmutex_api.c`) — a much
+   harder failure to diagnose than a patch-apply error, since everything
+   up to that point looks fine. Added both functions, copied from the
+   already-fixed `0001-zen-7.2.9.patch` (1.1.6).
+
+All three fixes were already known and working in `0001-zen-7.2.9.patch` —
+this just ports them into the generic file so they apply to any 7.2.x point
+release, not only 7.2.9. Verified with a real (non-dry-run) `patch -p1`
+apply against both pristine 7.2.9 and 7.2.11 sources: 0 errors, 0 rejects.
 
 ---
 
