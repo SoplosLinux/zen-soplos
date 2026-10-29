@@ -1,5 +1,45 @@
 # Changelog — zen-soplos
 
+## 1.2.0 — 2026-10-29
+
+### Added
+
+- `patches/0001-zen-7.3.patch` — Zen patchset for Linux 7.3. Neither
+  zen-kernel nor the 7.2 patches had anything that applies to 7.3, so the
+  7.3 BMQ/PDS kernels published before this patch were built without
+  `CONFIG_SCHED_ALT`.
+  - The BMQ/PDS scheduler now comes from Project C `prjc_v7.3-r0` (the
+    upstream author of BMQ/PDS) instead of zen-kernel's own older
+    `alt_*` lineage, which no longer matches any Project C release.
+  - Everything else is the 7.2.9 patch reconciled by hand against 7.3
+    (`workqueue.c`, `cpuset.c`, `debug.c`, `sysctl.c`, `amdgpu_smu.c`,
+    swap readahead moved to `mm/swap_state.c`, zero-context `Makefile`
+    hunk).
+
+### Fixed
+
+- Bugs in Project C 7.3-r0 that zen-kernel's code did not have:
+  - PSI was disabled under `SCHED_ALT` (no `/proc/pressure`, breaks
+    systemd-oomd). Ported zen-kernel's PSI hooks to Project C's
+    `alt_core.c` and removed the `depends on !SCHED_ALT`.
+  - `cpuset_cancel_attach()` never released `cpuset_mutex` (deadlock).
+  - BMQ `sched_task_ttwu()` used `>` instead of `-` for the sleep time.
+  - `debugfs_sched` only declared inside `!SCHED_ALT` blocks.
+  - `ignore_dl_rate_limit()` carried 7.2's `limits_changed`.
+
+### Removed
+
+- From the 7.3 patch only: the TTM/dmem cgroup eviction series (merged in
+  mainline 7.3) and `alt_topology_test.c` / `SCHED_ALT_TOPOLOGY_KUNIT_TEST`
+  (tests for zen-kernel's old topology code).
+
+### Notes
+
+- Verified with `patch -p1 --dry-run` against the kernel.org `v7.3`
+  tarball: 98 files, no offset, no fuzz, no rejects. The `Makefile` hunk
+  was also checked against a 7.3.1 `SUBLEVEL`.
+- Not yet compiled or boot-tested.
+
 ## 1.1.7 — 2026-10-16
 
 ### Fixed

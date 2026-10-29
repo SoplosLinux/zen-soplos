@@ -5,12 +5,11 @@ patchset (BMQ/PDS scheduler + assorted driver/filesystem/network tweaks),
 kept building against current Soplos kernel point releases when upstream
 hasn't published a matching release yet.
 
-> Wired into **soplos-kernel-installer** as a fallback: `core/downloader.py`
-> tries zen-kernel's own GitHub releases first, and only falls back to this
-> repo (`_download_zen_soplos()`) when upstream hasn't published a patch that
-> applies cleanly to the requested kernel version yet — verified with a
-> dry-run apply before either source is accepted, not just a successful
-> download.
+> Wired into **soplos-kernel-installer**: `core/downloader.py` tries this
+> repo first (`_download_zen_soplos()`), and only falls back to zen-kernel's
+> own GitHub releases when this repo has no patch that applies cleanly to
+> the requested kernel version — verified with a dry-run apply before
+> either source is accepted, not just a successful download.
 
 ---
 
@@ -34,6 +33,7 @@ zen-kernel hasn't published one yet.
 | `patches/0001-zen-7.1.patch` | Linux 7.1.5 | zen-kernel `v7.1.4-zen1` release |
 | `patches/0001-zen-7.2.patch` | Linux 7.2.x (whole line, see 1.1.7) | zen-kernel `v7.1.8-zen1` release |
 | `patches/0001-zen-7.2.9.patch` | Linux 7.2.9 | zen-kernel `v7.1.8-zen1` rebase for Linux 7.2.9 |
+| `patches/0001-zen-7.3.patch` | Linux 7.3.x | 7.2.9 patch + Project C `prjc_v7.3-r0` scheduler (see below) |
 
 No `v7.1.5-zen*` or `v7.2-zen*` release existed upstream at the time these
 rebases were made — zen-kernel typically publishes within days of each
@@ -173,6 +173,44 @@ apply against both pristine 7.2.9 and 7.2.11 sources: 0 errors, 0 rejects.
 
 ---
 
+## Why this rebase exists (7.3)
+
+No zen-kernel release and none of the 7.2 patches apply to 7.3, so the 7.3
+BMQ/PDS kernels built before this patch came out without `CONFIG_SCHED_ALT`.
+
+**The scheduler changed source.** zen-kernel's BMQ/PDS (`kernel/sched/alt_*`)
+is its own older lineage: `alt_core.h`, `alt_sched.h` and `alt_topology.*`
+differ by hundreds of lines from every Project C release from 7.1-r0 to
+7.2-r1. Rather than a third 3-way merge of that code onto 7.3's reworked
+scheduler core (7.2 needed five rounds of build fixes, see 1.1.1–1.1.5),
+the 7.3 patch takes BMQ/PDS from Project C `prjc_v7.3-r0`, published by
+BMQ/PDS's own author, which applies clean to v7.3.
+
+Project C 7.3-r0 has bugs zen-kernel's code did not have, fixed here:
+
+1. **PSI** — Project C disables `CONFIG_PSI` under `SCHED_ALT`, which
+   removes `/proc/pressure` and breaks systemd-oomd. zen-kernel's PSI hooks
+   were ported into Project C's `alt_core.c` (`enqueue_task`,
+   `dequeue_task`, pending-task migration, wakeup migration, tick,
+   `__schedule`, `sched_init`), plus `rq->psi_irq_time`.
+2. **cpuset deadlock** — `cpuset_cancel_attach()` lost its
+   `mutex_unlock(&cpuset_mutex)`.
+3. **BMQ wakeup boost** — `sched_task_ttwu()` compared (`>`) instead of
+   subtracting, so the sleep-time boost was always 0 or 1.
+4. **debugfs** — `debugfs_sched` only declared inside `!SCHED_ALT` blocks
+   (same fix as 1.1.4).
+5. **schedutil** — 7.2's `limits_changed` in `ignore_dl_rate_limit()`.
+
+Everything outside the scheduler is the 7.2.9 patch reconciled by hand
+against 7.3: the TTM/dmem cgroup series is dropped (merged in mainline
+7.3), the swap readahead tweak moved to `mm/swap_state.c` (`mm/swap.c` is
+gone), and `workqueue.c`, `cpuset.c`, `debug.c`, `sysctl.c` and
+`amdgpu_smu.c` were re-anchored on 7.3's new code. The `Makefile` hunk is
+zero-context, so the same file covers the whole 7.3.x line. Full details
+are in the patch header.
+
+---
+
 ## Status
 
 - **7.1.5:** verified with `patch -p1 --dry-run` (all 113 files clean, no
@@ -187,6 +225,10 @@ apply against both pristine 7.2.9 and 7.2.11 sources: 0 errors, 0 rejects.
 - **7.2.9:** verified with `patch -p1 --dry-run` (all 113 files 100% clean, 0
   rejects) against official Linux 7.2.9 sources. Stripped `arch/x86/Makefile`
   hunk to prevent ISA level (V2/V3/V4) build conflicts.
+- **7.3:** verified with `patch -p1 --dry-run` against the kernel.org `v7.3`
+  tarball (98 files, no offset, no fuzz, no rejects; `Makefile` hunk also
+  checked against a 7.3.1 `SUBLEVEL`). **Not yet compiled or
+  boot-tested.**
 - The GPU driver hunks (`amdgpu`, `i915`, `ttm`) and TCP/BBR3 hunks were not
   individually reviewed beyond the automated apply check — they touch
   subsystems unrelated to the scheduler and were not the reason either
@@ -215,6 +257,10 @@ patch -p1 < /path/to/patches/0001-zen-7.2.patch
 # or, for 7.2.9:
 cd /path/to/linux-7.2.9
 patch -p1 < /path/to/patches/0001-zen-7.2.9.patch
+
+# or, for 7.3.x:
+cd /path/to/linux-7.3
+patch -p1 < /path/to/patches/0001-zen-7.3.patch
 ```
 
 ---
