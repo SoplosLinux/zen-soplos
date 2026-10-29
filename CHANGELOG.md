@@ -1,5 +1,18 @@
 # Changelog — zen-soplos
 
+## 1.2.1 — 2026-10-29
+
+### Fixed
+
+- `patches/0001-zen-7.3.patch` failed to build (`kernel/sched/rq-offsets.s`,
+  during `prepare`): the PSI helpers in `kernel/sched/stats.h` call
+  mainline's `task_on_cpu(rq, p)` and `__task_rq_unlock(rq, p, rf)`, while
+  Project C's `alt_sched.h` defines `task_on_cpu(p)` and
+  `__task_rq_unlock(rq, rf)`. Both calls now use Project C's form under
+  `CONFIG_SCHED_ALT`.
+- Dry-run still clean against v7.3 (98 files, no fuzz). Only the `prepare`
+  step was reached; the rest of the build is still untested.
+
 ## 1.2.0 — 2026-10-29
 
 ### Added

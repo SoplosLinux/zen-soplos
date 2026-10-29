@@ -13453,15 +13453,23 @@ diff --git a/kernel/sched/stats.h b/kernel/sched/stats.h
  
  #ifdef CONFIG_PSI
  void psi_task_change(struct task_struct *task, int clear, int set);
-@@ -135,6 +137,7 @@
+@@ -132,9 +134,15 @@
+ 		return;
+ 
+ 	/* psi_sched_switch() will handle the flags */
++#ifdef CONFIG_SCHED_ALT
++	/* Project C's task_on_cpu() takes only the task */
++	if (task_on_cpu(p))
++#else
  	if (task_on_cpu(task_rq(p), p))
++#endif
  		return;
  
 +#ifndef CONFIG_SCHED_ALT
  	if (p->se.sched_delayed) {
  		/* CPU migration of "sleeping" task */
  		WARN_ON_ONCE(!(flags & ENQUEUE_MIGRATED));
-@@ -142,7 +145,9 @@
+@@ -142,7 +150,9 @@
  			set |= TSK_MEMSTALL;
  		if (p->in_iowait)
  			set |= TSK_IOWAIT;
@@ -13472,6 +13480,19 @@ diff --git a/kernel/sched/stats.h b/kernel/sched/stats.h
  		/* CPU migration of runnable task */
  		set = TSK_RUNNING;
  		if (p->in_memstall)
+@@ -204,7 +214,12 @@
+ 
+ 		rq = __task_rq_lock(p, &rf);
+ 		psi_task_change(p, p->psi_flags, 0);
++#ifdef CONFIG_SCHED_ALT
++		/* Project C's __task_rq_unlock() takes no task argument */
++		__task_rq_unlock(rq, &rf);
++#else
+ 		__task_rq_unlock(rq, p, &rf);
++#endif
+ 	}
+ }
+ 
 diff --git a/kernel/sched/syscalls.c b/kernel/sched/syscalls.c
 --- a/kernel/sched/syscalls.c
 +++ b/kernel/sched/syscalls.c
