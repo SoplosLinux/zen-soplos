@@ -34,6 +34,7 @@ zen-kernel hasn't published one yet.
 | `patches/0001-zen-7.2.patch` | Linux 7.2.x (whole line, see 1.1.7) | zen-kernel `v7.1.8-zen1` release |
 | `patches/0001-zen-7.2.9.patch` | Linux 7.2.9 | zen-kernel `v7.1.8-zen1` rebase for Linux 7.2.9 |
 | `patches/0001-zen-7.3.patch` | Linux 7.3.x | 7.2.9 patch + Project C `prjc_v7.3-r0` scheduler (see below) |
+| `patches/0001-zen-6.18.patch` | Linux 6.18 LTS (6.18.62) | zen-kernel `v6.18.13-zen1` release, rebased by a three-way merge |
 
 No `v7.1.5-zen*` or `v7.2-zen*` release existed upstream at the time these
 rebases were made — zen-kernel typically publishes within days of each
@@ -211,8 +212,42 @@ are in the patch header.
 
 ---
 
+## Why this rebase exists (6.18 LTS)
+
+The community asked for the Soplos kernels on the 6.18 long-term line. The
+last zen-kernel release of that line is `v6.18.13-zen1`, and it applies to
+6.18.13 only: against 6.18.62 it fails in 32 hunks.
+
+The rebase is a three-way merge: 6.18.13 as the base, the zen-kernel patch
+applied to it, and 6.18.62 as the target. The stable updates changed 60 of the
+115 files the patch touches; 53 merged with no conflict and 7 (9 conflicts)
+were resolved by hand. The two that are more than formatting:
+
+- `include/net/tcp.h` — the stable tree used `BIT(2)` to `BIT(4)` for the
+  AccECN congestion-control flags, where BBRv3 had `TCP_CONG_WANTS_CE_EVENTS`
+  at `BIT(2)`. It moved to `BIT(5)`.
+- `kernel/sched/syscalls.c` — the stable tree rewrote `set_user_nice()` with
+  the `sched_change` scope. The `CONFIG_SCHED_ALT` body of zen-kernel is
+  kept, the `#else` branch is the new body, and the new
+  `__setscheduler_dl_pi()` sits inside the `!CONFIG_SCHED_ALT` guard.
+
+The other five are in the header of the patch. Following 7.2.9 and 7.3, the
+`arch/x86/Makefile` hunk is not carried, so the x86-64 ISA level patch applies
+after it, and the `Makefile` hunk is zero-context and does not touch
+`SUBLEVEL`.
+
+A 6.18 point release moves the files under the patch: when 6.18.62 is left
+behind, check with `--dry-run` before assuming the file still applies.
+
+---
+
 ## Status
 
+- **6.18 LTS (6.18.62):** verified with `patch -p1 --fuzz=0` against the
+  kernel.org `v6.18.62` tarball (112 files, no offset, no fuzz, no rejects).
+  The x86-64 ISA level patch applies after it exactly as it does on the plain
+  6.18.62. **Not yet compiled or boot-tested:** the merge of the BBRv3 code
+  with the AccECN of the stable tree has to be compiled before it is trusted.
 - **7.1.5:** verified with `patch -p1 --dry-run` (all 113 files clean, no
   fuzz, no rejects), **compiled and boot-tested on real hardware** —
   `CONFIG_SCHED_ALT`/`CONFIG_SCHED_PDS` confirmed active at runtime, not

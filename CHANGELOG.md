@@ -1,5 +1,21 @@
 # Changelog — zen-soplos
 
+## 1.3.0 — 2026-11-08
+
+### Added
+
+- `patches/0001-zen-6.18.patch` — zen-kernel `v6.18.13-zen1` rebased onto Linux
+  6.18.62 (the 6.18 long-term line) by a three-way merge. The upstream patch
+  fails in 32 hunks against 6.18.62. Of the 115 files it touches, 60 changed
+  in the stable updates; 53 merged with no conflict and 7 (9 conflicts) were
+  resolved by hand: `Makefile`, `drivers/ata/ahci.c`,
+  `drivers/cpufreq/Kconfig.x86`, `include/net/tcp.h` (BBRv3's
+  `TCP_CONG_WANTS_CE_EVENTS` moves to `BIT(5)`, because the stable tree took
+  `BIT(2)` to `BIT(4)` for AccECN), `kernel/exit.c`, `kernel/sched/syscalls.c`
+  and `net/ipv4/tcp_bbr.c`. The `arch/x86/Makefile` hunk is not carried, as in
+  7.2.9 and 7.3. Applies to 6.18.62 with `patch -p1 --fuzz=0` (112 files, no
+  offset, no fuzz). Not yet compiled or boot-tested.
+
 ## 1.2.1 — 2026-10-29
 
 ### Fixed
