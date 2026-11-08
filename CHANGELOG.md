@@ -1,5 +1,26 @@
 # Changelog — zen-soplos
 
+## 1.3.1 — 2026-11-08
+
+### Fixed
+
+- `patches/0001-zen-6.18.patch` failed to compile on 6.18.62
+  (`kernel/sched/alt_core.c: too many arguments to function
+  'blk_plug_invalidate_ts'`). The scheduler of this patch (Project C,
+  `alt_core.c`) is a new file, so the merge could not see that the stable
+  updates changed the scheduler core it copies. Brought up to date with
+  6.18.62:
+  - `blk_plug_invalidate_ts()` takes no argument now and is called from
+    `finish_task_switch()`, not from `sched_update_worker()` (which loses its
+    `PF_BLOCK_TS` case).
+  - `sched_mm_cid_exit_signals()` is `sched_mm_cid_exit()` (`kernel/exit.c`
+    calls the new name; it would have failed to link).
+  - `rt_mutex_futex_pre_schedule()` and `rt_mutex_futex_post_schedule()` are
+    new, and `kernel/locking/rtmutex_api.c` calls them (it would have failed
+    to link).
+  Still applies to 6.18.62 with `patch -p1 --fuzz=0`. Not yet compiled
+  completely: the rest of the patch (BBRv3, AccECN, ahci) has not been built.
+
 ## 1.3.0 — 2026-11-08
 
 ### Added

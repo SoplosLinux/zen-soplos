@@ -246,8 +246,11 @@ behind, check with `--dry-run` before assuming the file still applies.
 - **6.18 LTS (6.18.62):** verified with `patch -p1 --fuzz=0` against the
   kernel.org `v6.18.62` tarball (112 files, no offset, no fuzz, no rejects).
   The x86-64 ISA level patch applies after it exactly as it does on the plain
-  6.18.62. **Not yet compiled or boot-tested:** the merge of the BBRv3 code
-  with the AccECN of the stable tree has to be compiled before it is trusted.
+  6.18.62. The scheduler (`alt_core.c`) was brought up to date with the
+  scheduler API of 6.18.62 after the first compile failed (see the
+  CHANGELOG, 1.3.1). **Not yet compiled completely or boot-tested:** the merge
+  of the BBRv3 code with the AccECN of the stable tree has to be compiled
+  before it is trusted.
 - **7.1.5:** verified with `patch -p1 --dry-run` (all 113 files clean, no
   fuzz, no rejects), **compiled and boot-tested on real hardware** —
   `CONFIG_SCHED_ALT`/`CONFIG_SCHED_PDS` confirmed active at runtime, not
